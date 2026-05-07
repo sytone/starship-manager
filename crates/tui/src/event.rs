@@ -18,14 +18,22 @@ pub fn handle_events(app: &mut App) -> anyhow::Result<bool> {
         }
 
         match key.code {
-            // Global: quit
-            KeyCode::Char('q') | KeyCode::Char('Q') => {
-                app.quit = true;
-                return Ok(false);
-            }
+            // Global: quit (Ctrl+C always, q/Q when not editing)
             KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 app.quit = true;
                 return Ok(false);
+            }
+            KeyCode::Char('q') | KeyCode::Char('Q') if app.focus != Pane::Editor => {
+                app.quit = true;
+                return Ok(false);
+            }
+            KeyCode::Esc => {
+                if app.focus == Pane::Editor {
+                    app.focus = Pane::Profiles;
+                } else {
+                    app.quit = true;
+                    return Ok(false);
+                }
             }
             // Tab: cycle pane focus
             KeyCode::Tab => {
@@ -42,11 +50,18 @@ pub fn handle_events(app: &mut App) -> anyhow::Result<bool> {
                     Pane::Preview => Pane::Editor,
                 };
             }
-            // Actions
+            // Actions: Ctrl+key works in all panes, plain key works outside editor
+            KeyCode::Char('s') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                app.save_profile()?;
+            }
             KeyCode::Char('s') if app.focus != Pane::Editor => {
                 app.save_profile()?;
             }
-            KeyCode::Char('p') => {
+            KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                app.refresh_preview();
+                app.status = "Preview refreshed.".into();
+            }
+            KeyCode::Char('p') if app.focus != Pane::Editor => {
                 app.refresh_preview();
                 app.status = "Preview refreshed.".into();
             }
@@ -56,7 +71,7 @@ pub fn handle_events(app: &mut App) -> anyhow::Result<bool> {
             KeyCode::Char('i') if app.focus != Pane::Editor => {
                 app.install_starship();
             }
-            KeyCode::Char('?') => {
+            KeyCode::Char('?') if app.focus != Pane::Editor => {
                 app.modal = Modal::Help;
             }
             // Navigation in profiles list

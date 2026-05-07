@@ -23,15 +23,17 @@ pub fn draw(f: &mut Frame, app: &App) {
         Modal::Help => draw_modal(
             f,
             "Help — Keybindings",
-            "q        Quit\n\
-             Tab      Cycle pane focus\n\
+            "q / Esc    Quit (Esc exits editor to profiles)\n\
+             Tab        Cycle pane focus\n\
              Shift+Tab  Reverse cycle\n\
-             ↑/↓ k/j Navigate list / editor\n\
-             s        Save profile\n\
-             p        Refresh preview\n\
-             a        Apply profile to starship config\n\
-             i        Install/update starship\n\
-             ?        Show this help\n\n\
+             ↑/↓ k/j   Navigate list / editor\n\
+             s / Ctrl+S Save profile\n\
+             p / Ctrl+P Refresh preview\n\
+             a          Apply profile to starship config\n\
+             i          Install/update starship\n\
+             ?          Show this help\n\n\
+             In editor: plain keys type text; use Ctrl+S to save,\n\
+             Ctrl+P to preview, Esc to return to profiles.\n\n\
              Press any key to close.",
         ),
     }

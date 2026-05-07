@@ -69,7 +69,7 @@ impl App {
             editor_cursor: 0,
             preview_output,
             status: String::from(
-                "q:quit  Tab:switch pane  s:save  p:preview  a:apply  i:install  ?:help",
+                "q:quit  Tab:pane  s:save  p:preview  a:apply  i:install  ?:help  (Ctrl+S/P in editor)",
             ),
             modal: Modal::None,
         })

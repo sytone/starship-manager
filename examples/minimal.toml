@@ -1,0 +1,14 @@
+# Minimal Starship preset – clean and simple.
+
+format = "$directory$git_branch$character"
+
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[✗](bold red)"
+
+[directory]
+truncation_length = 3
+truncation_symbol = "…/"
+
+[git_branch]
+symbol = "🌱 "

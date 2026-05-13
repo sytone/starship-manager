@@ -1,0 +1,13 @@
+# Plain ASCII preset – no special fonts needed.
+
+format = "$directory$git_branch$character"
+
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[x](bold red)"
+
+[directory]
+truncation_length = 4
+
+[git_branch]
+symbol = "git:"

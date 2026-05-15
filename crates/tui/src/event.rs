@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use std::time::Duration;
 
 use crate::app::{App, Modal, Pane};
@@ -11,6 +11,11 @@ pub fn handle_events(app: &mut App) -> anyhow::Result<bool> {
     }
 
     if let Event::Key(key) = event::read()? {
+        // Only handle key-press events; ignore release/repeat to avoid
+        // duplicate actions (e.g. help flashing open then closed on Windows).
+        if key.kind != KeyEventKind::Press {
+            return Ok(true);
+        }
         // If a modal is open, any key closes it.
         if !matches!(app.modal, Modal::None) {
             app.modal = Modal::None;

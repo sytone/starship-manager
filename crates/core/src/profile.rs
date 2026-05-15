@@ -38,7 +38,11 @@ impl Profile {
 }
 
 /// List all `.toml` profiles in the given directory, creating it if needed.
-pub fn list_profiles(dir: &Path) -> Result<Vec<Profile>> {
+///
+/// If `active_config` is `Some`, and that file exists on disk, it will be
+/// included in the returned list (with the display name `"active"`) provided
+/// it is not already present in the directory.
+pub fn list_profiles(dir: &Path, active_config: Option<&Path>) -> Result<Vec<Profile>> {
     if !dir.exists() {
         fs::create_dir_all(dir)
             .with_context(|| format!("creating profiles dir {}", dir.display()))?;
@@ -54,6 +58,25 @@ pub fn list_profiles(dir: &Path) -> Result<Vec<Profile>> {
             }
         }
     }
+
+    // Include the active starship config if it exists and isn't already listed.
+    if let Some(active) = active_config
+        && active.is_file()
+    {
+        let already_listed = profiles.iter().any(|p| p.path == active);
+        if !already_listed {
+            match Profile::load(active) {
+                Ok(mut p) => {
+                    p.name = String::from("active");
+                    profiles.push(p);
+                }
+                Err(e) => {
+                    eprintln!("Warning: skipping active config {}: {e}", active.display())
+                }
+            }
+        }
+    }
+
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(profiles)
 }
@@ -84,7 +107,7 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let dir = tmp.path().join("profiles");
         // dir doesn't exist yet
-        let profiles = list_profiles(&dir).unwrap();
+        let profiles = list_profiles(&dir, None).unwrap();
         assert!(profiles.is_empty());
         assert!(dir.exists());
 
@@ -93,9 +116,51 @@ mod tests {
         fs::write(dir.join("beta.toml"), "# beta").unwrap();
         fs::write(dir.join("readme.md"), "not toml").unwrap();
 
-        let profiles = list_profiles(&dir).unwrap();
+        let profiles = list_profiles(&dir, None).unwrap();
         assert_eq!(profiles.len(), 2);
         assert_eq!(profiles[0].name, "alpha");
         assert_eq!(profiles[1].name, "beta");
+    }
+
+    #[test]
+    fn list_profiles_includes_active_config() {
+        let tmp = TempDir::new().unwrap();
+        let dir = tmp.path().join("profiles");
+        fs::create_dir_all(&dir).unwrap();
+
+        // Create an active config outside the profiles directory
+        let active = tmp.path().join("starship.toml");
+        fs::write(&active, "# active config").unwrap();
+
+        let profiles = list_profiles(&dir, Some(&active)).unwrap();
+        assert_eq!(profiles.len(), 1);
+        assert_eq!(profiles[0].name, "active");
+        assert!(profiles[0].content.contains("active config"));
+    }
+
+    #[test]
+    fn list_profiles_skips_active_if_already_in_dir() {
+        let tmp = TempDir::new().unwrap();
+        let dir = tmp.path().join("profiles");
+        fs::create_dir_all(&dir).unwrap();
+
+        // Active config IS inside the profiles directory
+        let active = dir.join("myconfig.toml");
+        fs::write(&active, "# my config").unwrap();
+
+        let profiles = list_profiles(&dir, Some(&active)).unwrap();
+        assert_eq!(profiles.len(), 1);
+        assert_eq!(profiles[0].name, "myconfig");
+    }
+
+    #[test]
+    fn list_profiles_skips_nonexistent_active() {
+        let tmp = TempDir::new().unwrap();
+        let dir = tmp.path().join("profiles");
+        fs::create_dir_all(&dir).unwrap();
+
+        let active = tmp.path().join("does_not_exist.toml");
+        let profiles = list_profiles(&dir, Some(&active)).unwrap();
+        assert!(profiles.is_empty());
     }
 }

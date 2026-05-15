@@ -21,7 +21,7 @@ pub fn invoke_starship(config_path: &Path, work_dir: &Path) -> Result<String> {
     let output = Command::new("starship")
         .arg("prompt")
         .env("STARSHIP_CONFIG", config_path)
-        .env("STARSHIP_SHELL", "bash")
+        .env("STARSHIP_SHELL", "")
         .env("TERM", "xterm-256color")
         .current_dir(work_dir)
         .output()
@@ -43,13 +43,19 @@ pub fn invoke_starship(config_path: &Path, work_dir: &Path) -> Result<String> {
 pub fn strip_ansi(input: &str) -> String {
     let mut out = String::with_capacity(input.len());
     let mut in_escape = false;
-    for ch in input.chars() {
+    let mut chars = input.chars().peekable();
+    while let Some(ch) = chars.next() {
         if in_escape {
             if ch.is_ascii_alphabetic() {
                 in_escape = false;
             }
         } else if ch == '\x1b' {
             in_escape = true;
+        } else if ch == '\\' && matches!(chars.peek(), Some('[' | ']')) {
+            // Strip bash prompt escapes: literal \[ and \]
+            chars.next();
+        } else if ch == '\x01' || ch == '\x02' {
+            // Strip readline bracket characters (SOH / STX)
         } else {
             out.push(ch);
         }
@@ -70,5 +76,17 @@ mod tests {
     #[test]
     fn strip_ansi_plain_passthrough() {
         assert_eq!(strip_ansi("plain text"), "plain text");
+    }
+
+    #[test]
+    fn strip_ansi_removes_bash_prompt_escapes() {
+        let input = "\\[\\]hello\\[\\] world";
+        assert_eq!(strip_ansi(input), "hello world");
+    }
+
+    #[test]
+    fn strip_ansi_removes_readline_brackets() {
+        let input = "\x01\x1b[31m\x02hello\x01\x1b[0m\x02 world";
+        assert_eq!(strip_ansi(input), "hello world");
     }
 }

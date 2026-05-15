@@ -75,14 +75,11 @@ pub fn handle_events(app: &mut App) -> anyhow::Result<bool> {
                 app.modal = Modal::Help;
             }
             // Navigation in profiles list
-            KeyCode::Up | KeyCode::Char('k')
-                if app.focus == Pane::Profiles && app.selected > 0 =>
-            {
+            KeyCode::Up | KeyCode::Char('k') if app.focus == Pane::Profiles && app.selected > 0 => {
                 app.select_profile(app.selected - 1);
             }
             KeyCode::Down | KeyCode::Char('j')
-                if app.focus == Pane::Profiles
-                    && app.selected + 1 < app.profiles.len() =>
+                if app.focus == Pane::Profiles && app.selected + 1 < app.profiles.len() =>
             {
                 app.select_profile(app.selected + 1);
             }

@@ -75,21 +75,20 @@ pub fn handle_events(app: &mut App) -> anyhow::Result<bool> {
                 app.modal = Modal::Help;
             }
             // Navigation in profiles list
-            KeyCode::Up | KeyCode::Char('k') if app.focus == Pane::Profiles => {
-                if app.selected > 0 {
-                    app.select_profile(app.selected - 1);
-                }
+            KeyCode::Up | KeyCode::Char('k')
+                if app.focus == Pane::Profiles && app.selected > 0 =>
+            {
+                app.select_profile(app.selected - 1);
             }
-            KeyCode::Down | KeyCode::Char('j') if app.focus == Pane::Profiles => {
-                if app.selected + 1 < app.profiles.len() {
-                    app.select_profile(app.selected + 1);
-                }
+            KeyCode::Down | KeyCode::Char('j')
+                if app.focus == Pane::Profiles
+                    && app.selected + 1 < app.profiles.len() =>
+            {
+                app.select_profile(app.selected + 1);
             }
             // Minimal editor key handling
-            KeyCode::Up if app.focus == Pane::Editor => {
-                if app.editor_cursor > 0 {
-                    app.editor_cursor -= 1;
-                }
+            KeyCode::Up if app.focus == Pane::Editor && app.editor_cursor > 0 => {
+                app.editor_cursor -= 1;
             }
             KeyCode::Down if app.focus == Pane::Editor => {
                 let line_count = app.editor_content.lines().count();

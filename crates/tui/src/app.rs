@@ -46,7 +46,8 @@ impl App {
     /// Create a new App, loading profiles from the default directory.
     pub fn new() -> Result<Self> {
         let profiles_dir = starship_manager_core::profiles_dir();
-        let profiles = profile::list_profiles(&profiles_dir)?;
+        let active_config = config::active_starship_config_path();
+        let profiles = profile::list_profiles(&profiles_dir, Some(&active_config))?;
 
         let (editor_content, preview_output) = if let Some(p) = profiles.first() {
             let preview = Self::generate_preview(&p.content);
